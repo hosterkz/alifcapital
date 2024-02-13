@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Documentation | Specification of interaction protocol between the Alif Bank system and Partners</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<meta property="og:description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<link rel="canonical" href="invoices.html" />
+<meta property="og:url" content="https://alifcapital.github.io/invoices" />
+<meta property="og:site_name" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Specification of interaction protocol between the Alif Bank system and Partners","headline":"Documentation","url":"https://alifcapital.github.io/invoices"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="assets/css/style.css@v=769cfe25fef89910cea50c4a2911dccef2594b03.css">
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="assets/js/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js" integrity="sha256-3Jy/GbSLrg0o9y5Z5n1uw0qxZECH7C6OQpVBgNFYa0g=" crossorigin="anonymous"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Documentation</h1>
+        <p>Specification of interaction protocol between the Alif Bank system and Partners</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/alifcapital/alifcapital.github.io" class="button fork"><strong>View On GitHub</strong></a>
+        
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="providers.html"><img src="https://img.shields.io/badge/doc-Providers-success" alt="providers" /></a>
+<a href="agents.html"><img src="https://img.shields.io/badge/doc-Agents-success" alt="agents" /></a>
+<a href="invoices.html"><img src="https://img.shields.io/badge/doc-Invoices-success" alt="invoices" /></a>
+<a href="webcheckout.html"><img src="https://img.shields.io/badge/doc-Webcheckout-success" alt="webcheckout" /></a>
+<a href="merchants.html"><img src="https://img.shields.io/badge/doc-Merchants-success" alt="merchants" /></a></p>
+
+<h2 id="общие-принципы-протокола">Общие принципы протокола</h2>
+
+<p>Взаимодействие Агента (далее Партнер) и Системы (далее Алиф) построено на основе протокола HTTPS (RFC 2818: HTTP/1.1) в режиме “запрос-ответ”, где инициатором запроса всегда является Партнер, а отвечающей стороной – Алиф. Все запросы должны быть отправлены с методом POST.</p>
+
+<p>При обработке запроса от Партнера, Алиф выполняет требуемую операцию, а затем ответом передает Партнеру данные и результат выполнения операции.</p>
+
+<p>key и password - логин и пароль пользователя Партнера. Генерируются и передаются приватно Партнеру со стороны Алиф. В рамках данной документации используются следующие данные: key=”44444444”, password=”cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0”. Пароль перед использованием нужно хешировать алгоритмом HMAC-SHA256: password = hash_hmac(“sha256”, password, key) = hash_hmac(“sha256”, “cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0”, “44444444”) = “3a60036f4a425d879a3f4708c3a1a2b333ca361a1685a7d91d3a4b6183ae2457”</p>
+
+<p>В запросах используется Аутентификационный токен (Token), который отправляется в заголовках запросов и является по сути подписью запроса. Этот Token будет использоваться во всех запросах как часть процесса аутентификации и состоит из хэшированной строки в результате применения алгоритма HMAC-SHA256. Параметрами алгоритма являются Строка и пароль пользователя Партнера.</p>
+
+<p>Строка для генерации Token состоит из конкатенации определенных полей и отличается в разных запросах. В обяснении каждого запроса приводится формула конкатенации этой Строки.</p>
+
+<h2 id="запрос-create">Запрос Create</h2>
+
+<p><strong>Заголовки</strong></p>
+
+<p>Token: генерируется по алгоритму SHA256 из конкатенации строк: key+orderid+price.fixed(2)+phone посредством пароля пользователя Партнера.</p>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>key</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>orderid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер заказа со стороны продавца</td>
+    </tr>
+    <tr>
+      <td>price</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>Сумма заказа (в сомони)</td>
+    </tr>
+    <tr>
+      <td>phone</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Номер телефона плательщика</td>
+    </tr>
+    <tr>
+      <td>deadline</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Дата просрочки инвойса в формате ГГГГ-ММ-ДДTЧЧ:ММ:ССZ</td>
+    </tr>
+    <tr>
+      <td>paytype</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Способ оплаты: terminal, alif.mobi</td>
+    </tr>
+    <tr>
+      <td>info</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Информация об инвойсе, например: “Оплата за телефон”</td>
+    </tr>
+    <tr>
+      <td>callbackurl</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>URL, по которому Алиф ответит при оплате заказа</td>
+    </tr>
+    <tr>
+      <td>non_partial_payment</td>
+      <td>boolean</td>
+      <td>Обязательно</td>
+      <td>Флаг, по которому, разрешается (если FALSE) либо отказывается (если TRUE) частичная оплата инвойса.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа</td>
+    </tr>
+    <tr>
+      <td>invoiceinfo</td>
+      <td>InvoiceInfo</td>
+      <td>Условно</td>
+      <td>Информация о созданном инвойсе. Обязательно, если “code”:200 либо “code”:203</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>InvoiceInfo</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>invoiceid</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер инвойса</td>
+    </tr>
+    <tr>
+      <td>price</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Сумма заказа (в сомони)</td>
+    </tr>
+    <tr>
+      <td>deadline</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Дата просрочки инвойса в формате ГГГГ-ММ-ДДTЧЧ:ММ:ССZ</td>
+    </tr>
+    <tr>
+      <td>paytype</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Способ оплаты: terminal, alif.mobi</td>
+    </tr>
+    <tr>
+      <td>info</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Информация об инвойсе, например: “Оплата за телефон”</td>
+    </tr>
+    <tr>
+      <td>recipient</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Получатель отплаты инвойса - торговец</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Пример запроса
+Метод: POST
+Адрес: https://invoices.alif.tj/create
+Token: 425b9b7c5d0b5c9c4055714a4e105eef809dcb8e61f8baaea7e6a95b91a29a01
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+  "key":"44444444",
+  "orderid":"130487",
+  "price":5402.00,
+  "phone":"992935141010",
+  "deadline":"2022-08-22T12:21:35Z",
+  "paytype":"terminal",
+  "info":"Барои харидани ноутбуки Lenovo",
+  "callbackurl": "https://domain.tj/path"
+}
+
+// Конкатенированная строка для генерации Token: "444444441304875402.00992935141010"
+
+// Пример ответа
+
+{
+  "code": 200,
+  "message": "Успешно",
+  "invoiceinfo": {
+    "invoiceid": 84361491,
+    "price": "5402.00",
+    "deadline": "2022-08-22T12:21:35Z",
+    "paytype": "terminal",
+    "info": "Барои харидани ноутбуки Lenovo",
+    "recipient": "Имя мерчанта"
+  }
+}
+</code></pre></div></div>
+
+<h2 id="колбек">Колбек</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>orderId</td>
+      <td>string</td>
+      <td>alpha numeric</td>
+      <td>Обязательно</td>
+      <td>Номер заказа, по которому вы отправили запрос на проведение платежа</td>
+    </tr>
+    <tr>
+      <td>transactionId</td>
+      <td>string</td>
+      <td>alpha numeric</td>
+      <td>Обязательно</td>
+      <td>Уникалный ID транзакции, генерируется Алифом и передается Партнёру.</td>
+    </tr>
+    <tr>
+      <td>status</td>
+      <td>string</td>
+      <td>alpha</td>
+      <td>Обязательно</td>
+      <td>Статус платежа: “ok” или “failed”</td>
+    </tr>
+    <tr>
+      <td>token</td>
+      <td>string</td>
+      <td>hexadecimal</td>
+      <td>Обязательно</td>
+      <td>Аутентификационный токен для проверки валидности ответа. Генерируется Алифом по алгоритму SHA256 из конкатенации строк: orderId+status+transactionId посредством пароля пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>float</td>
+      <td>numeric</td>
+      <td>Обязательно</td>
+      <td>Сумма платежа (в сомони).</td>
+    </tr>
+    <tr>
+      <td>phone</td>
+      <td>string</td>
+      <td>phone</td>
+      <td>Обязательно</td>
+      <td>Номер телефон плательщика</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Метод: POST
+Адрес: callbackUrl
+Accept: application/json
+Content-type: application/json; charset=utf-8
+Service-Name: Alifpay
+
+{
+  "orderId": "12345678",
+  "transactionId": "92938922",
+  "status": "ok",
+  "token": "75fa87340a0c43a9a0efe9e1aa65f5cab7912e3001714827a5fd481f2d7e0416",
+  "amount": 10,
+  "phone": "+992931234455"
+}
+
+// Конкатенированная строка для генерации token ответа: "12345678ok92938922"
+</code></pre></div></div>
+
+<h2 id="запрос-status">Запрос Status</h2>
+
+<p>При успешном ответе статус заказа отправится в поле message. Список статусов заказа можно увидеть в Таблице №2.</p>
+
+<p><strong>Заголовки</strong></p>
+
+<p>Token: генерируется по алгоритму SHA256 из конкатенации строк: key+invoiceid посредством пароля пользователя Партнера.</p>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>key</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>invoiceid</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер инвойса</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Пример запроса
+Метод: POST
+Адрес: https://invoices.alif.tj/status
+Token: ef6178aeba2f33b80f603a541e23e2823cd970b6db01cfa0d14eb188c57f11b1
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+  "key":"44444444",
+  "invoiceid": 84361491
+}
+
+// Конкатенированная строка для генерации Token: "4444444484361491"
+
+// Пример ответа
+
+{
+  "code": 200,
+  "message": "pending"
+}
+</code></pre></div></div>
+
+<h2 id="запрос-cancel">Запрос Cancel</h2>
+
+<p>Невозможно отменить оплаченные или частично оплаченные заказы. Список статусов заказов можно увидеть в Таблице №2.</p>
+
+<p><strong>Заголовки</strong></p>
+
+<p>Token: генерируется по алгоритму SHA256 из конкатенации строк: key+invoiceid посредством пароля пользователя Партнера.</p>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>key</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>invoiceid</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер инвойса</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Пример запроса
+Метод: POST
+Адрес: https://invoices.alif.tj/cancel
+Token: ef6178aeba2f33b80f603a541e23e2823cd970b6db01cfa0d14eb188c57f11b1
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+  "key":"44444444",
+  "invoiceid": 84361491
+}
+
+// Конкатенированная строка для генерации Token: "4444444484361491"
+
+// Пример ответа
+
+{
+  "code": 200,
+  "message": "Успешно"
+}
+</code></pre></div></div>
+
+<h2 id="таблица-1-коды-ответов">Таблица №1. Коды ответов</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Код</th>
+      <th>Описание</th>
+      <th>Фатальность</th>
+      <th>create</th>
+      <th>status</th>
+      <th>cancel</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>Успешно</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>202</td>
+      <td>Частичная оплата</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>203</td>
+      <td>Заказ создан, но не получилось отправить уведомление о заказе клиенту</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>208</td>
+      <td>Повторная оплата</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Неверный запрос</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>401</td>
+      <td>Неправильный ключ</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>403</td>
+      <td>Неверный токен</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>404</td>
+      <td>Заказ не существует</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>406</td>
+      <td>Просроченный срок заказа</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>409</td>
+      <td>Дублированный заказ</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>410</td>
+      <td>Сумма не совпадает с суммой выставленного счета</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Сервис временно не работает. Попробуйте отправить запрос позже</td>
+      <td>Нет</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="таблица-2-статусы-заказов">Таблица №2. Статусы заказов</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Статус</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pending</td>
+      <td>в ожидании</td>
+    </tr>
+    <tr>
+      <td>expired</td>
+      <td>просрочено</td>
+    </tr>
+    <tr>
+      <td>paid</td>
+      <td>оплачено</td>
+    </tr>
+    <tr>
+      <td>partial</td>
+      <td>частично оплачено</td>
+    </tr>
+    <tr>
+      <td>canceled</td>
+      <td>отменено</td>
+    </tr>
+  </tbody>
+</table>
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+  </body>
+</html>

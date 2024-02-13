@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Documentation | Specification of interaction protocol between the Alif Bank system and Partners</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<meta property="og:description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<link rel="canonical" href="webcheckout.html" />
+<meta property="og:url" content="https://alifcapital.github.io/webcheckout" />
+<meta property="og:site_name" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Specification of interaction protocol between the Alif Bank system and Partners","headline":"Documentation","url":"https://alifcapital.github.io/webcheckout"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="assets/css/style.css@v=769cfe25fef89910cea50c4a2911dccef2594b03.css">
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="assets/js/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js" integrity="sha256-3Jy/GbSLrg0o9y5Z5n1uw0qxZECH7C6OQpVBgNFYa0g=" crossorigin="anonymous"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Documentation</h1>
+        <p>Specification of interaction protocol between the Alif Bank system and Partners</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/alifcapital/alifcapital.github.io" class="button fork"><strong>View On GitHub</strong></a>
+        
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="providers.html"><img src="https://img.shields.io/badge/doc-Providers-success" alt="providers" /></a>
+<a href="agents.html"><img src="https://img.shields.io/badge/doc-Agents-success" alt="agents" /></a>
+<a href="invoices.html"><img src="https://img.shields.io/badge/doc-Invoices-success" alt="invoices" /></a>
+<a href="webcheckout.html"><img src="https://img.shields.io/badge/doc-Webcheckout-success" alt="webcheckout" /></a>
+<a href="merchants.html"><img src="https://img.shields.io/badge/doc-Merchants-success" alt="merchants" /></a></p>
+
+<h2 id="общие-принципы-протокола">Общие принципы протокола</h2>
+
+<p>Передача данных между «alif.pro» (далее Алиф) и агентами по приёму платежей (далее Партнер) построена на основе протокола HTTPS (RFC 2818: HTTP/1.1).</p>
+
+<p>Для передачи данных используется метод POST – поток данных передается в теле запроса, отправляемого Партнером Алифу.</p>
+
+<p>key и password - логин и пароль пользователя Партнера. Генерируются и передаются приватно Партнеру со стороны Алиф. В рамках данной документации используются следующие данные: key=”44444444”, password=”cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0”. Пароль перед использованием нужно хешировать алгоритмом HMAC-SHA256: password = hash_hmac(“sha256”, password, key) = hash_hmac(“sha256”, “cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0”, “44444444”) = “3a60036f4a425d879a3f4708c3a1a2b333ca361a1685a7d91d3a4b6183ae2457”</p>
+
+<h2 id="организация-протокола">Организация протокола</h2>
+
+<p>Взаимодействие Алиф и Партнера происходит следующим образом:</p>
+<ol>
+  <li>Партнер формирует запрос в формате формы HTML, включая в него все необходимые данные, и передает его по протоколу HTTPS на сервер Алифа по адресу Боевой (https://web.alif.tj/) Тестовый (https://dev-web.alif.tj/).</li>
+  <li>Сервер осуществляет авторизацию клиента и разбор формы.</li>
+  <li>В случае успешной авторизации сервер выполняет операцию снятия с карты и отправит колбек в формате JSON, в том числе результат выполнения запроса (ОК или код ошибки в случае ошибки).</li>
+</ol>
+
+<h2 id="запрос-отправки-формы">Запрос отправки формы</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>key</td>
+      <td>string</td>
+      <td>numeric</td>
+      <td>Обязательно</td>
+      <td>Логин и пароль пользователя Партнера. Генерируются и передаются приватно Партнеру со стороны Алиф.</td>
+    </tr>
+    <tr>
+      <td>token</td>
+      <td>string</td>
+      <td>hexadecimal</td>
+      <td>Обязательно</td>
+      <td>Аутентификационный токен, генерируется Партнером по алгоритму SHA256 из конкатенации строк: key+orderId+amount.fixed(2)+сallbackUrl посредством пароля пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>orderId</td>
+      <td>string</td>
+      <td>alpha numeric</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер заказа. Генерируется и передается со стороны Партнёра. Используется также для проверки статуса платежа.</td>
+    </tr>
+    <tr>
+      <td>gate</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>salom или km</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>string</td>
+      <td>numeric</td>
+      <td>Обязательно</td>
+      <td>Сумма, вводимая плательщиком в интерфейсе продавца (в сомони).</td>
+    </tr>
+    <tr>
+      <td>callbackUrl</td>
+      <td>string</td>
+      <td>URL</td>
+      <td>Обязательно</td>
+      <td>URL, по которому Алиф ответить о статусе платежа.</td>
+    </tr>
+    <tr>
+      <td>returnUrl</td>
+      <td>string</td>
+      <td>URL</td>
+      <td>Обязательно</td>
+      <td>URL, по которому можно вернуться к Торговцу.</td>
+    </tr>
+    <tr>
+      <td>phone</td>
+      <td>string</td>
+      <td>phone</td>
+      <td>Обязательно</td>
+      <td>Номер телефона отправителя платежа.</td>
+    </tr>
+    <tr>
+      <td>info</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Информация о платеже, например: “Оплата за телефон”.</td>
+    </tr>
+    <tr>
+      <td>email</td>
+      <td>string</td>
+      <td>email</td>
+      <td>Опционально</td>
+      <td>Адрес электронной почты отправителя платежа.</td>
+    </tr>
+    <tr>
+      <td>infoHash</td>
+      <td>string</td>
+      <td>hexadecimal</td>
+      <td>Опционально</td>
+      <td>Аутентификационный токен при оплате услуг налога</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?php</span>
+  <span class="nv">$key</span> <span class="o">=</span> <span class="s1">'44444444'</span><span class="p">;</span>
+  <span class="nv">$password</span> <span class="o">=</span> <span class="s1">'cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0'</span><span class="p">;</span>
+  <span class="nv">$callbackUrl</span> <span class="o">=</span> <span class="s1">'http://myshop.tj/thank_you.php'</span><span class="p">;</span>
+  <span class="nv">$returnUrl</span> <span class="o">=</span> <span class="s1">'http://myshop.tj'</span><span class="p">;</span>
+  <span class="nv">$amount</span> <span class="o">=</span> <span class="mf">2.99</span><span class="p">;</span>
+  <span class="nv">$orderId</span> <span class="o">=</span> <span class="s1">'321123'</span><span class="p">;</span>
+  <span class="nv">$gate</span> <span class="o">=</span> <span class="s1">'km'</span><span class="p">;</span>
+  <span class="nv">$info</span> <span class="o">=</span> <span class="s1">'Xiaomi Mi Mix 2S 6/64 Gb'</span><span class="p">;</span>
+  <span class="nv">$email</span> <span class="o">=</span> <span class="s1">'testUsers@gmail.com'</span><span class="p">;</span>
+  <span class="nv">$phone</span> <span class="o">=</span> <span class="s1">'988888888'</span><span class="p">;</span>
+  <span class="nv">$token</span> <span class="o">=</span> <span class="nb">hash_hmac</span><span class="p">(</span><span class="s1">'sha256'</span><span class="p">,</span> <span class="nv">$key</span><span class="mf">.</span><span class="nv">$orderId</span><span class="mf">.</span><span class="nb">number_format</span><span class="p">(</span><span class="nv">$amount</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'.'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="mf">.</span><span class="nv">$callbackUrl</span><span class="p">,</span> <span class="nb">hash_hmac</span><span class="p">(</span><span class="s1">'sha256'</span><span class="p">,</span> <span class="nv">$password</span><span class="p">,</span> <span class="nv">$key</span><span class="p">));</span>
+<span class="cp">?&gt;</span>
+
+<span class="nt">&lt;form</span> <span class="na">name=</span><span class="s">"AlifPayForm"</span> <span class="na">action=</span><span class="s">"https://dev-web.alif.tj/"</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">id=</span><span class="s">"alifPayForm"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"key"</span> <span class="na">id=</span><span class="s">"key"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$key</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"token"</span> <span class="na">id=</span><span class="s">"token"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$token</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"callbackUrl"</span> <span class="na">id=</span><span class="s">"callbackUrl"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$callbackUrl</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"returnUrl"</span> <span class="na">id=</span><span class="s">"returnUrl"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$returnUrl</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"amount"</span> <span class="na">id=</span><span class="s">"amount"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$amount</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"orderId"</span> <span class="na">id=</span><span class="s">"orderId"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$orderId</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"gate"</span> <span class="na">id=</span><span class="s">"gate"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$gate</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"info"</span> <span class="na">id=</span><span class="s">"info"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$info</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"email"</span> <span class="na">id=</span><span class="s">"email"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$email</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"phone"</span> <span class="na">id=</span><span class="s">"phone"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$phone</span><span class="p">;</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">value=</span><span class="s">"Пардохт бо Корти Милли"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre></div></div>
+
+<h2 id="колбек">Колбек</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>orderId</td>
+      <td>string</td>
+      <td>alpha numeric</td>
+      <td>Обязательно</td>
+      <td>Номер заказа, по которому вы отправили запрос на проведение платежа</td>
+    </tr>
+    <tr>
+      <td>transactionId</td>
+      <td>string</td>
+      <td>alpha numeric</td>
+      <td>Обязательно</td>
+      <td>Уникалный ID транзакции, генерируется Алифом и передается Партнёру.</td>
+    </tr>
+    <tr>
+      <td>status</td>
+      <td>string</td>
+      <td>alpha</td>
+      <td>Обязательно</td>
+      <td>Статус платежа: “ok” или “failed”</td>
+    </tr>
+    <tr>
+      <td>token</td>
+      <td>string</td>
+      <td>hexadecimal</td>
+      <td>Обязательно</td>
+      <td>Аутентификационный токен для проверки валидности ответа. Генерируется Алифом по алгоритму SHA256 из конкатенации строк: orderId+status+transactionId посредством пароля пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>float</td>
+      <td>numeric</td>
+      <td>Обязательно</td>
+      <td>Сумма платежа (в сомони).</td>
+    </tr>
+    <tr>
+      <td>phone</td>
+      <td>string</td>
+      <td>phone</td>
+      <td>Обязательно</td>
+      <td>Номер телефон плательщика</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Метод: POST
+Адрес: callbackUrl
+Accept: application/json
+Content-type: application/json; charset=utf-8
+Service-Name: Alifpay
+
+{
+  "orderId": "12345678",
+  "transactionId": "92938922",
+  "status": "ok",
+  "token": "75fa87340a0c43a9a0efe9e1aa65f5cab7912e3001714827a5fd481f2d7e0416",
+  "amount": 10,
+  "phone": "+992931234455"
+}
+
+// Конкатенированная строка для генерации token ответа: "12345678ok92938922"
+</code></pre></div></div>
+
+<h2 id="проверка-статуса-оплаты">Проверка статуса оплаты</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>orderId</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Номер заказа, по которому вы отправили запрос на проведение платежа</td>
+    </tr>
+    <tr>
+      <td>key</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Генерируется и передается приватно со стороны Алиф.</td>
+    </tr>
+    <tr>
+      <td>token</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Аутентификационный токен. Генерируется Алифом по алгоритму SHA256 из конкатенации строк: key+orderId посредством пароля пользователя Партнера.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<p>Параметры ответа идентичны с параметрами запроса колбека</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Пример запроса
+Метод: POST
+Адрес: https://dev-web.alif.tj/checktxn
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+  "orderId": "12345678",
+  "key": "334122",
+  "token": "d7e798553d8db0edfc922dafbd31e246c1d8dd755c62a4da8a9cdc1eb8333d4b"
+}
+
+// Конкатенированная строка для генерации token запроса: "33412212345678"
+
+// Пример ответа
+
+{
+  "orderId": "12345678",
+  "transactionId": "92938922",
+  "status": "ok",
+  "token": "75fa87340a0c43a9a0efe9e1aa65f5cab7912e3001714827a5fd481f2d7e0416",
+  "amount": 10,
+  "phone": "+992931234455"
+}
+
+// Конкатенированная строка для генерации token ответа: "12345678ok92938922"
+</code></pre></div></div>
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+  </body>
+</html>

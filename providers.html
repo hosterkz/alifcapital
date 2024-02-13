@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Documentation | Specification of interaction protocol between the Alif Bank system and Partners</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<meta property="og:description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<link rel="canonical" href="providers.html" />
+<meta property="og:url" content="https://alifcapital.github.io/providers" />
+<meta property="og:site_name" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Specification of interaction protocol between the Alif Bank system and Partners","headline":"Documentation","url":"https://alifcapital.github.io/providers"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="assets/css/style.css@v=769cfe25fef89910cea50c4a2911dccef2594b03.css">
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="assets/js/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js" integrity="sha256-3Jy/GbSLrg0o9y5Z5n1uw0qxZECH7C6OQpVBgNFYa0g=" crossorigin="anonymous"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Documentation</h1>
+        <p>Specification of interaction protocol between the Alif Bank system and Partners</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/alifcapital/alifcapital.github.io" class="button fork"><strong>View On GitHub</strong></a>
+        
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="providers.html"><img src="https://img.shields.io/badge/doc-Providers-success" alt="providers" /></a>
+<a href="agents.html"><img src="https://img.shields.io/badge/doc-Agents-success" alt="agents" /></a>
+<a href="invoices.html"><img src="https://img.shields.io/badge/doc-Invoices-success" alt="invoices" /></a>
+<a href="webcheckout.html"><img src="https://img.shields.io/badge/doc-Webcheckout-success" alt="webcheckout" /></a>
+<a href="merchants.html"><img src="https://img.shields.io/badge/doc-Merchants-success" alt="merchants" /></a></p>
+
+<h2 id="общие-принципы-протокола">Общие принципы протокола</h2>
+
+<p>Взаимодействие Системы и провайдера строится в режиме “запрос-ответ”, где инициатором запроса всегда является Система, а отвечающей стороной – провайдер.</p>
+
+<p>Каждый платеж в Системе имеет уникальный идентификатор, который передается в каждом запросе. По этому идентификатору производится дальнейшая сверка взаиморасчетов и решение спорных вопросов.</p>
+
+<p>При обработке запроса от Системы, провайдер должен выполнить требуемую операцию, а затем ответом передать Системе данные (если это требуется) и результат выполнения операции.</p>
+
+<p>Golang sample: https://github.com/alifpay/providers</p>
+
+<h2 id="требования-к-интерфейсу-провайдера">Требования к интерфейсу провайдера</h2>
+
+<ol>
+  <li>
+    <p>Интерфейс должен принимать запросы по протоколу HTTPS</p>
+  </li>
+  <li>
+    <p>Интерфейс должен обрабатывать параметры, передаваемые системой методом HTTP POST - в теле запроса в виде формате JSON в кодировке UTF-8.</p>
+  </li>
+  <li>
+    <p>Интерфейс должен формировать ответ системе в формате JSON в кодировке UTF-8.</p>
+  </li>
+  <li>
+    <p>Скорость ответа не должна превышать 60 секунд, в противном случае система разрывает соединение по таймауту.</p>
+  </li>
+  <li>
+    <p>Если предполагаемое количество платежей за услуги подключаемого провайдера ожидается интенсивным (до 10 платежей в минуту и более), необходимо, чтобы интерфейс поддерживал многопоточную коммуникацию</p>
+  </li>
+</ol>
+
+<h2 id="запрос-check">Запрос check</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<p>При получении запроса check провайдер должен проверить наличие в своей базе абонента с указанным идентификатором и выполнить внутренние проверки идентификатора в соответствии с принятой логикой пополнения лицевых счетов через платежные Системы.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>action</td>
+      <td>Обязательно</td>
+      <td>Идентификация типа запроса: осуществить проверку счета абонента. Всегда равен check</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе. В базе провайдера не должно содержаться двух успешно проведенных платежей с одним и тем же идентификатором платежа. При получении запроса со значением id, уже существующим в базе провайдера, провайдер должен вернуть результат обработки предыдущего запроса.</td>
+    </tr>
+    <tr>
+      <td>account</td>
+      <td>Обязательно</td>
+      <td>Идентификатор абонента в информационной системе провайдера</td>
+    </tr>
+    <tr>
+      <td>srv_id</td>
+      <td>Опционально</td>
+      <td>Идентификатор услуги, предоставляемой провайдером (Используется, если провайдер предоставляет более 1 услуги)</td>
+    </tr>
+    <tr>
+      <td>info</td>
+      <td>Опционально</td>
+      <td>Дополнительные параметры, передаваемые провайдеру</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<p>В ответе интерфейс провайдера должен вернуть JSON-документ, со следующими полями:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>Обязательно</td>
+      <td>Код результата операции (code=302 в случае существования абонента и возможности принятия платежа)</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе.</td>
+    </tr>
+    <tr>
+      <td>info_for_client</td>
+      <td>Опционально</td>
+      <td>Информация для отображения клиенту при совершении платежа</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Check Пример запроса</strong></p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+POST 
+Accept: application/json
+Host: service.provider.com:443
+Content-type: application/json; charset=utf-8
+Authorization: VVNFUk5BTUU6UEFTU1dPUkQ=
+
+{
+  "id": 12345132564875,
+  "action": "check",  
+  "account": "123000"
+}
+
+// Дополнительные параметры, передаваемые провайдеру
+
+{
+  "id": 12345132564875,
+  "action": "check",  
+  "account": "123000"
+  "info":{"fieldId1":"value1","fieldId2":"value2"}
+}<span class="sb">
+
+
+</span>// Check Пример ответа
+
+{
+  "code": 302
+  "id": 12345132564875
+}<span class="sb">
+
+
+</span>// Дополнительные параметры,
+
+{
+  "code": 302
+  "id": 12345132564875,
+  "info_for_client": "Баланс: 50.30 смн<span class="se">\\</span>nСрок оплаты: 25.10.2020"
+}
+
+</code></pre></div></div>
+
+<h2 id="запрос-pay">Запрос pay</h2>
+
+<p>При получении запроса pay провайдер должен произвести пополнение баланса абонента.
+В базе провайдера не должно содержаться двух успешно проведенных платежей с одним и тем же идентификатором платежа (id – идентификатор платежа в Системе). При получении запроса со значением id, уже существующим в базе провайдера, провайдер должен вернуть результат обработки предыдущего запроса.</p>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>action</td>
+      <td>Обязательно</td>
+      <td>Идентификация типа запроса: Запрос pay. Всегда равен pay</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе. В базе провайдера не должно содержаться двух успешно проведенных платежей с одним и тем же идентификатором платежа. При получении запроса со значением id, уже существующим в базе провайдера, провайдер должен вернуть результат обработки предыдущего запроса.</td>
+    </tr>
+    <tr>
+      <td>account</td>
+      <td>Обязательно</td>
+      <td>Идентификатор абонента в информационной системе провайдера</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>Обязательно</td>
+      <td>Сумма операции в формате 100.50</td>
+    </tr>
+    <tr>
+      <td>time</td>
+      <td>Опционально</td>
+      <td>Дата операции (Пример: 2006-01-02T15:04:05Z)</td>
+    </tr>
+    <tr>
+      <td>srv_id</td>
+      <td>Опционально</td>
+      <td>Идентификатор услуги, предоставляемой провайдером (Используется, если провайдер предоставляет более 1 услуги)</td>
+    </tr>
+    <tr>
+      <td>info</td>
+      <td>Опционально</td>
+      <td>Дополнительные параметры, передаваемые провайдеру</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<p>В ответе интерфейс провайдера должен вернуть JSON-документ, со следующими полями:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>Обязательно</td>
+      <td>Код результата операции (code=200 в случае успешной регистрации платежа)</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе.</td>
+    </tr>
+    <tr>
+      <td>response_id</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер операции пополнения баланса абонента (в информационной системе провайдера)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+// Pay Пример запроса
+
+POST 
+Accept: application/json
+Host: service.provider.com:443
+Content-type: application/json; charset=utf-8
+Authorization: VVNFUk5BTUU6UEFTU1dPUkQ=
+
+{
+  "id": 12345132564875,
+  "action": "pay",  
+  "account": "123000",
+  "amount": 100.50,
+  "time": "2006-01-02T15:04:05Z"
+}
+
+// Pay Дополнительные параметры, передаваемые провайдеру
+
+{
+  "id": 12345132564875,
+  "action": "pay",  
+  "account": "123000",
+  "amount": 100.50,
+  "time": "2006-01-02T15:04:05Z"
+  "info":{"fieldId1":"value1","fieldId2":"value2"}
+}<span class="sb">
+
+
+</span>// Pay Пример ответа
+
+{
+  "code": 200
+  "id": 12345132564875,
+  "response_id": "4545487"
+}
+
+</code></pre></div></div>
+
+<h2 id="запрос-status">Запрос status</h2>
+
+<p>При получении запроса status провайдер должен проверить статус платежа.</p>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>action</td>
+      <td>Обязательно</td>
+      <td>Идентификация типа запроса: Запрос status. Всегда равен status</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<p>В ответе интерфейс провайдера должен вернуть JSON-документ, со следующими полями:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>Обязательно</td>
+      <td>Код результата операции</td>
+    </tr>
+    <tr>
+      <td>id</td>
+      <td>Обязательно</td>
+      <td>Идентификатор платежа в Системе.</td>
+    </tr>
+    <tr>
+      <td>response_id</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер операции пополнения баланса абонента (в информационной системе провайдера)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="авторизации-запросов">Авторизации запросов</h2>
+<p>В заявке на подключение провайдер должен задать идентификатор (логин) и секретный пароль к нему, используемые для авторизации при запросах.</p>
+
+<p>К запросу добавляется HTTP-заголовок Authorization. В заголовке указывается строка пара “логин:пароль”, закодированная в BASE64:</p>
+
+<p>Authorization: BASE64(“Login:Password”)</p>
+
+<h2 id="error-codes">Error Codes</h2>
+
+<p>Результаты выполнения запросов</p>
+
+<p>При обработке запросов от Системы провайдер должен сопоставить все возникающие в его приложении ошибки с приведенным ниже списком и возвращать соответствующие коды в поле “code”.</p>
+
+<p>В списке отдельно отмечены фатальные и нефатальные ошибки:
+Фатальная ошибка означает, что повторная отправка запроса с теми же параметрами приведет к 100% повторению той же ошибки; следовательно, Система прекращает обработку клиентского запроса и завершает его с ошибкой.
+Нефатальная ошибка означает для Системы, что повторение запроса с теми же параметрами через некоторый промежуток времени, возможно, приведет к успеху. При получении нефатальной ошибки Система будет повторять запросы, увеличивая интервал, пока операция не завершится успехом или фатальной ошибкой, либо пока не истечет срок жизни платежа в Системе (24 часа).</p>
+
+<p>Например, отсутствие связи с сервером провайдера является нефатальной ошибкой. Отсутствие в ответе поля “code” является фатальной ошибкой.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Код</th>
+      <th>Описание</th>
+      <th>Фатальность</th>
+      <th>Check</th>
+      <th>Pay</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>Успешно</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>203</td>
+      <td>Платеж отклонен</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>302</td>
+      <td>Абонент найден</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>404</td>
+      <td>Идентификатор абонента не найден (Ошиблись номером)</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>104</td>
+      <td>Транзакция не существует</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>-</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>107</td>
+      <td>Транзакция уже существует</td>
+      <td>Нет</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>108</td>
+      <td>Успешно проведен(дубликат)</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>201</td>
+      <td>В обработке</td>
+      <td>Нет</td>
+      <td>-</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>303</td>
+      <td>Услуга временно недоступна,(неудачный)</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>305</td>
+      <td>Недостаточно средств на счету</td>
+      <td>Нет</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Ваш запрос некорректен (ошибка данных, формата)</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>405</td>
+      <td>Сумма вне диапазона</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Внутренняя ошибка сервера (неудачный)</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>503</td>
+      <td>Сервис недоступен (неудачный)</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>520</td>
+      <td>Неизвестная ошибка</td>
+      <td>Нет</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>401</td>
+      <td>Авторизация не удалась</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="example">Example</h2>
+
+<p>Golang sample: https://github.com/alifpay/providers</p>
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+  </body>
+</html>

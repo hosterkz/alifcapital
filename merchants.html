@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Documentation | Specification of interaction protocol between the Alif Bank system and Partners</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<meta property="og:description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<link rel="canonical" href="merchants.html" />
+<meta property="og:url" content="https://alifcapital.github.io/merchants" />
+<meta property="og:site_name" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Specification of interaction protocol between the Alif Bank system and Partners","headline":"Documentation","url":"https://alifcapital.github.io/merchants"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="assets/css/style.css@v=769cfe25fef89910cea50c4a2911dccef2594b03.css">
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="assets/js/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js" integrity="sha256-3Jy/GbSLrg0o9y5Z5n1uw0qxZECH7C6OQpVBgNFYa0g=" crossorigin="anonymous"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Documentation</h1>
+        <p>Specification of interaction protocol between the Alif Bank system and Partners</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/alifcapital/alifcapital.github.io" class="button fork"><strong>View On GitHub</strong></a>
+        
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="providers.html"><img src="https://img.shields.io/badge/doc-Providers-success" alt="providers" /></a>
+<a href="agents.html"><img src="https://img.shields.io/badge/doc-Agents-success" alt="agents" /></a>
+<a href="invoices.html"><img src="https://img.shields.io/badge/doc-Invoices-success" alt="invoices" /></a>
+<a href="webcheckout.html"><img src="https://img.shields.io/badge/doc-Webcheckout-success" alt="webcheckout" /></a>
+<a href="merchants.html"><img src="https://img.shields.io/badge/doc-Merchants-success" alt="merchants" /></a></p>
+
+<h3 id="1-запрос-create">1.	Запрос Create:</h3>
+
+<p><strong><em>Адрес</em></strong>: /api/emvqr/partner/invoiceqr/create</p>
+
+<p><strong><em>Заголовок</em></strong>: Token=hash_hmac(‘sha256’, user_id + amount + callback_url, password)</p>
+
+<p><strong><em>Password</em></strong> генерируется и передается приватно Партнеру со стороны Алиф</p>
+
+<p><strong><em>Запрос</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>user_id</td>
+      <td>string</td>
+      <td>uuid</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>integer</td>
+      <td>integer</td>
+      <td>Сумма QR-кода в дирамах</td>
+    </tr>
+    <tr>
+      <td>callback_url</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Адрес API партнёра, на который отправляются запросы подтверждения платежа и проверки статуса</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><em>Ответ:</em></strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>numeric</td>
+      <td>Код ответа</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Текст ответа</td>
+    </tr>
+    <tr>
+      <td>payload</td>
+      <td>struct</td>
+      <td>struct</td>
+      <td>Структура с данными QR-кода</td>
+    </tr>
+    <tr>
+      <td>payload.qrLink</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Адрес QR-кода</td>
+    </tr>
+    <tr>
+      <td>payload.invoiceId</td>
+      <td>string</td>
+      <td>string</td>
+      <td>ID QR-кода</td>
+    </tr>
+  </tbody>
+</table>
+
+<ol>
+  <li>При создании QR-кода в запросе нужно заполнять поле callback_url. На этот адрес отправится колбэк с двумя действиями: action=pay, action=status.</li>
+  <li>Список статус-кодов можно посмотреть в пункте 5;</li>
+</ol>
+
+<p><strong><em>Метод: POST</em></strong></p>
+
+<p><strong><em>Пример запроса</em></strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl --location 'https://HOST/api/emvqr/partner/invoiceqr/create' \
+--header 'Token: 2d7eb885b4a1c3127f3dde6a1469b68031cc8341696a7fd64ea90ee198673f12' \
+--header 'Content-Type: application/json' \
+--data '{
+    "user_id": "bbff4aa6-c3d8-4083-bb1d- fffb6060a055",
+    "amount": 1234,
+    "callback_url": "https://PARTNER_ADDRESS/api/ qr/callback"
+}'
+</code></pre></div></div>
+<p><strong><em>Пример ответа</em></strong>:
+<strong><em>Метод: POST</em></strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "code": 200,
+    "message": "Успешно",
+    "payload": {
+        "qrLink": "https://HOST/api/mobi/v0/external/qr/?data=18880",
+        "invoiceId": "18880"
+    }
+}
+</code></pre></div></div>
+
+<h3 id="2-запрос-pay">2. Запрос	Pay:</h3>
+
+<p><strong><em>Адрес</em></strong>: берётся из значения callback_url при создании QR-кода</p>
+
+<p><strong><em>Заголовок</em></strong>: Token=hash_hmac(‘sha256’, action + user_id + amount + invoiceId, password)</p>
+
+<p><strong><em>PASSWORD</em></strong> генерируется и передается приватно Партнеру со стороны Алиф</p>
+
+<p><strong><em>Запрос</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя   поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>action</td>
+      <td>string</td>
+      <td>“pay”</td>
+      <td>оплата</td>
+    </tr>
+    <tr>
+      <td>user_id</td>
+      <td>string</td>
+      <td>uuid</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>integer</td>
+      <td>integer</td>
+      <td>Сумма QR-кода в дирамах</td>
+    </tr>
+    <tr>
+      <td>invoiceId</td>
+      <td>string</td>
+      <td>string</td>
+      <td>ID QR-кода</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><em>Ответ</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>numeric</td>
+      <td>Код  ответа</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Текст ответа</td>
+    </tr>
+  </tbody>
+</table>
+
+<ol>
+  <li>action=pay отправится только один раз при оплате. Если API Партнера не принял по каким-то причинам, в течение 5-ти минут отправится на этот же адрес запрос с action=status.</li>
+  <li>Список статус-кодов можно посмотреть в пункте 5;</li>
+</ol>
+
+<p><strong><em>Метод: POST</em></strong></p>
+
+<p><strong><em>Пример запроса</em></strong>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl --location 'https://PARTNER_ADDRESS/api/qr/callback' \
+--header 'Token: 0a3596a20c21d551d01b70abb2e2814f73e404c953b3e6dba5c92a39d6c21fa7' \
+--header 'Content-Type: application/json' \
+--data '{
+    "action": "pay",
+    "user_id": "bbff4aa6-c3d8-4083-bb1d- fffb6060a055",
+    "amount": 1234,
+    "invoiceId": 18880
+}'
+</code></pre></div></div>
+<p><strong><em>Пример ответа</em></strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+   "code": 200,
+   "message": "Успешно"
+}
+</code></pre></div></div>
+
+<h3 id="3-запрос-status">3. Запрос	Status:</h3>
+
+<p><strong><em>Адрес</em></strong>: берётся из значения callback_url при создании QR-кода</p>
+
+<p><strong><em>Заголовок</em></strong>: Token=hash_hmac(‘sha256’, action + user_id + amount + invoiceId, password)</p>
+
+<p><strong><em>PASSWORD</em></strong> генерируется и передается приватно Партнеру со стороны Алиф</p>
+
+<p><strong><em>Запрос</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>action</td>
+      <td>string</td>
+      <td>“status”</td>
+      <td>Проверка статуса платежа</td>
+    </tr>
+    <tr>
+      <td>user_id</td>
+      <td>string</td>
+      <td>uuid</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>integer</td>
+      <td>integer</td>
+      <td>Сумма QR-кода в дирамах</td>
+    </tr>
+    <tr>
+      <td>invoiceId</td>
+      <td>string</td>
+      <td>string</td>
+      <td>ID QR-кода</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><em>Ответ</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>numeric</td>
+      <td>Код ответа</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Текст ответа</td>
+    </tr>
+  </tbody>
+</table>
+
+<ol>
+  <li>Список статус-кодов можно посмотреть в пункте 5;</li>
+</ol>
+
+<p><strong><em>Метод: POST</em></strong></p>
+
+<p><strong><em>Пример запроса</em></strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl --location 'https://PARTNER_ADDRESS/api/qr/callback' \
+--header 'Token: 53ae182dd399098f2aa70babef4265492461efd622e64a78d40b48d1e75380c5' \
+--header 'Content-Type: application/json' \
+--data '{
+    "action": "status",
+    "user_id": "bbff4aa6-c3d8-4083-bb1d- fffb6060a055",
+    "amount": 1234,
+    "invoiceId": 18880
+}'
+</code></pre></div></div>
+<p><strong><em>Пример ответа</em></strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "code": 200,
+  "message": "Успешно"
+}
+</code></pre></div></div>
+
+<h3 id="4-запрос-cancel">4. Запрос Cancel:</h3>
+
+<p><strong><em>Адрес</em></strong>: /api/emvqr/partner/invoiceqr/cancel</p>
+
+<p><strong><em>Заголовок</em></strong>: Token=hash_hmac(‘sha256’, user_id + id,  password)</p>
+
+<p><strong><em>PASSWORD</em></strong> генерируется и передается приватно Партнеру со стороны Алиф</p>
+
+<p><strong><em>Запрос</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>id</td>
+      <td>integer</td>
+      <td>integer</td>
+      <td>Id-транзакций</td>
+    </tr>
+    <tr>
+      <td>user_id</td>
+      <td>string</td>
+      <td>uuid</td>
+      <td>Генерируется и передается приватно Партнеру со стороны Алиф</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><em>Ответ</em></strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Имя поля</th>
+      <th>Тип</th>
+      <th>Значение</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>integer</td>
+      <td>numeric</td>
+      <td>Код ответа</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>string</td>
+      <td>Текст ответа</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><em>Метод: POST</em></strong></p>
+
+<p><strong><em>Пример запроса</em></strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl --location 'https://HOST/api/emvqr/partner/invoiceqr/cancel' \
+--header 'Token: 2d7eb885b4a1c3127f3dde6a1469b68031cc8341696a7fd64ea90ee198673f12' \
+--header 'Content-Type: application/json' \
+--data '{
+    "user_id": "bbff4aa6-c3d8-4083-bb1d- fffb6060a055",
+    "id": 1234
+}'
+</code></pre></div></div>
+
+<p><strong><em>Пример ответа</em></strong>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+   "code": 200,
+   "message":"Транзакция успешно отменена"
+   "txn_id": 0,
+   "payload": null
+}
+</code></pre></div></div>
+
+<h3 id="5коды-ответов-алифа">5.Коды ответов Алифа:</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>code</th>
+      <th>message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>OK</td>
+    </tr>
+    <tr>
+      <td>208</td>
+      <td>Дублированный запрос</td>
+    </tr>
+    <tr>
+      <td>209</td>
+      <td>Повторный платеж</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Неверный запрос</td>
+    </tr>
+    <tr>
+      <td>401</td>
+      <td>Доступ запрещен</td>
+    </tr>
+    <tr>
+      <td>404</td>
+      <td>Терминал не найден</td>
+    </tr>
+    <tr>
+      <td>405</td>
+      <td>Инвойс не найден</td>
+    </tr>
+    <tr>
+      <td>406</td>
+      <td>QR не найден</td>
+    </tr>
+    <tr>
+      <td>407</td>
+      <td>Агент не найден</td>
+    </tr>
+    <tr>
+      <td>408</td>
+      <td>Транзакция не найдена</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Внутренняя ошибка системы</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="6-коды-ответов-партнёра">6. Коды ответов Партнёра:</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>code</th>
+      <th>message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>Успешно</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Неверный запрос</td>
+    </tr>
+    <tr>
+      <td>404</td>
+      <td>Платёж не существует</td>
+    </tr>
+    <tr>
+      <td>410</td>
+      <td>Неуспешный платёж</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Сервис временно не работает. Попробуйте отправить запрос позже</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+  </body>
+</html>

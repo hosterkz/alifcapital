@@ -1,0 +1,1853 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Documentation | Specification of interaction protocol between the Alif Bank system and Partners</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<meta property="og:description" content="Specification of interaction protocol between the Alif Bank system and Partners" />
+<link rel="canonical" href="agents.html" />
+<meta property="og:url" content="https://alifcapital.github.io/agents" />
+<meta property="og:site_name" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Specification of interaction protocol between the Alif Bank system and Partners","headline":"Documentation","url":"https://alifcapital.github.io/agents"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="assets/css/style.css@v=769cfe25fef89910cea50c4a2911dccef2594b03.css">
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="assets/js/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js" integrity="sha256-3Jy/GbSLrg0o9y5Z5n1uw0qxZECH7C6OQpVBgNFYa0g=" crossorigin="anonymous"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Documentation</h1>
+        <p>Specification of interaction protocol between the Alif Bank system and Partners</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/alifcapital/alifcapital.github.io" class="button fork"><strong>View On GitHub</strong></a>
+        
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="providers.html"><img src="https://img.shields.io/badge/doc-Providers-success" alt="providers" /></a>
+<a href="agents.html"><img src="https://img.shields.io/badge/doc-Agents-success" alt="agents" /></a>
+<a href="invoices.html"><img src="https://img.shields.io/badge/doc-Invoices-success" alt="invoices" /></a>
+<a href="webcheckout.html"><img src="https://img.shields.io/badge/doc-Webcheckout-success" alt="webcheckout" /></a>
+<a href="merchants.html"><img src="https://img.shields.io/badge/doc-Merchants-success" alt="merchants" /></a></p>
+
+<p><a href="agents.html"><img src="https://img.shields.io/badge/lang-ru-red.svg" alt="ru" /></a>
+<a href="agents/en.html"><img src="https://img.shields.io/badge/lang-en-blue.svg" alt="en" /></a></p>
+
+<h2 id="общие-принципы-протокола">Общие принципы протокола</h2>
+
+<p>Взаимодействие между Агентом (далее Партнер) и Платежной Системой (далее Алиф) построено на основе протокола HTTPS (RFC
+2818: HTTP/1.1) в режиме “запрос-ответ”, где инициатором запроса всегда является Партнер, а отвечающей стороной – Алиф.</p>
+
+<p>Каждый платеж Партнера имеет уникальный идентификатор, который передается в каждом запросе. По идентификатору Партнера
+производится дальнейшая сверка взаиморасчетов и решение спорных вопросов.</p>
+
+<p>При обработке запроса от Партнера, Алиф выполняет требуемую операцию, а затем ответом передает Партнеру данные и
+результат выполнения операции.</p>
+
+<h2 id="организация-протокола">Организация протокола</h2>
+
+<p>Взаимодействие Партнера и Алиф происходит следующим образом:</p>
+
+<ol>
+  <li>
+    <p>Партнер формирует запрос в формате JSON, включая в него необходимые данные, и передает его по протоколу HTTPS Алифу
+по адресу {URL}/check для проверки счета клиента, а также создания платежа. Алиф осуществляет авторизацию
+клиента и разбор JSON. В случае успешной авторизации Алиф выполняет необходимые действия и возвращает Партнеру ответ
+в формате JSON, включающий результат выполнения запроса. Если Партнер получит успешный ответ (“code”:200, “status”:”
+accepted”), то может перейти к следующему шагу (2).</p>
+  </li>
+  <li>
+    <p>После получения успешного ответа от запроса Check, необходимо подтвердить платеж отправив запрос по адресу
+{URL}/pay. Партнер перейдет к следующему шагу (3), если получит нефинальный ответ (“statusCode”:2)</p>
+  </li>
+  <li>
+    <p>При получении нефинального ответа от запроса Pay, необходимо отправлять запрос Проверки статуса платежа по адресу
+{URL}/post_check с интервалом в 5 минут.</p>
+  </li>
+  <li>
+    <p>Если Партнер повторит пункт (1) с теми же данными, то получит ответ: “code”:409, “status”:”{статус платежа в Алифе}”.
+После получения такого ответа к следующему шагу (2) можно перейти только в том случае, если статус платежа в Алифе
+равен “accepted”.</p>
+  </li>
+  <li>
+    <p>Если Партнер повторит пункт (2) с теми же данными, получит ответ: “code”:406, “status”:”{статус платежа в Системе
+Алифа}”. После получения такого ответа, если статус платежа не финальный (финальные статусы: success, failed,
+canceled), нужно перейти к шагу (3).</p>
+  </li>
+  <li>
+    <p>Кроме этих запросов есть еще необязательный запрос Проверки счета получателя по адресу {URL}/accounts. При
+получении запроса accounts Алиф проверит по указанной услуге наличие абонента с указанным идентификатором. Признаком
+успешности данного запроса является “code”:200.</p>
+  </li>
+</ol>
+
+<h2 id="безопасность">Безопасность</h2>
+
+<ol>
+  <li>
+    <p>Интерфейс должен принимать запросы с IP адресов Партнёра, которые были предварительно переданы техническим
+сотрудникам Алиф.</p>
+  </li>
+  <li>
+    <p>userid и password - ID и пароль пользователя Партнера. Генерируются и передаются приватно Партнеру со стороны Алиф. В
+рамках данной документации используются следующие данные: userid=”476a1b42-b3dc-40e9-afad-4aaae1d640b9”, password=”
+cztef62wrwcysyubbbdnhlk1rs2cztfsqgwww7j0”.</p>
+  </li>
+  <li>
+    <p>В запросах используется Аутентификационный токен (hash), который является по сути подписью запроса. Этот hash будет
+использоваться во всех запросах как часть процесса аутентификации и состоит из хэшированной строки в результате
+применения алгоритма HMAC-SHA256. Параметрами алгоритма являются Строка и пароль пользователя Партнера.</p>
+  </li>
+  <li>
+    <p>Строка для генерации hash состоит из конкатенации определенных полей и отличается в разных запросах. В обяснении
+параметров каждого запроса приводится формула конкатенации этой Строки.</p>
+  </li>
+</ol>
+
+<h2 id="запросы-check-pay-post_check">Запросы check, pay, post_check</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>service</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Тип услуги. Смотрите в Таблице №3.</td>
+    </tr>
+    <tr>
+      <td>userid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>ID пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>hash</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Подпись запроса. Генерируется по алгоритму SHA256 из конкатенации строк: userid+account+txnid+amount.fixed(2) посредством пароля пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>account</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Номера кредита/депозита/карты/кошелка/счёта клиента для пополнения.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>Сумма платежа в валюте Партнера либо услуги.</td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Код валюты по стандарту ISO 4217, например TJS, RUB, USD, UZS, …</td>
+    </tr>
+    <tr>
+      <td>txnid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Уникальный номер транзакции на стороне Партнера. В запросах check и pay одного платежа должен быть одинаковым.</td>
+    </tr>
+    <tr>
+      <td>phone</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Номер телефона отправителя платежа. Этот номер используется для извещения плательщика или последующего контактирования.</td>
+    </tr>
+    <tr>
+      <td>fee</td>
+      <td>float</td>
+      <td>Опционально</td>
+      <td>Комиссия с клиента, которую взымает партнер.</td>
+    </tr>
+    <tr>
+      <td>providerId</td>
+      <td>int</td>
+      <td>Условно</td>
+      <td>Идентификатор услуги провайдера. Партнеру предоставляется список доступных услуг провайдеров. Обязательно, если “service”:”provider”.</td>
+    </tr>
+    <tr>
+      <td>last_name</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Фамилия отправителя. Обязательно, если “service”:”transfer_by_phone | transfer_by_phone_uz | card_humouz | card_uzcard | card_visa_foreign”.Если service”:”wallet” и страна партнёра не Таджикистан то поле обязательно в осотальных случаях нет.</td>
+    </tr>
+    <tr>
+      <td>first_name</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Имя отправителя. Обязательно, если “service”:”transfer_by_phone | transfer_by_phone_uz | card_humouz | card_uzcard | card_visa_foreign”.Если service”:”wallet” и страна партнёра не Таджикистан то поле обязательно в осотальных случаях нет.</td>
+    </tr>
+    <tr>
+      <td>middle_name</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Отчество отправителя.</td>
+    </tr>
+    <tr>
+      <td>sender_birthday</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Дата рождения отправителя в формате DD.MM.YYYY. Обязательно, если “service”:”transfer_by_phone | transfer_by_phone_uz | card_humouz | card_uzcard”.</td>
+    </tr>
+    <tr>
+      <td>id_series_number</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Номер документа отправителя.</td>
+    </tr>
+    <tr>
+      <td>address</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Обязательно, если “service”:”card_visa_foreign”.</td>
+    </tr>
+    <tr>
+      <td>resident_city</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Обязательно, если “service”:”card_visa_foreign”.</td>
+    </tr>
+    <tr>
+      <td>resident_country</td>
+      <td>int</td>
+      <td>Условно</td>
+      <td>Обязательно, если “service”:”card_visa_foreign”.</td>
+    </tr>
+    <tr>
+      <td>postal_code</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Обязательно, если “service”:”card_visa_foreign”.</td>
+    </tr>
+    <tr>
+      <td>recipient_name</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Обязательно, если “service”:”card_visa_foreign”.</td>
+    </tr>
+    <tr>
+      <td>details</td>
+      <td>json</td>
+      <td>Условно</td>
+      <td>Дополнительные детали транзакции. Обязательно, если “service”: “emv_qr”.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>id</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Уникальный идентификатор платежа на стороне Алифа.</td>
+    </tr>
+    <tr>
+      <td>datetime</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Дата и время обработки запроса в формате RFC3339Nano</td>
+    </tr>
+    <tr>
+      <td>code</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа.</td>
+    </tr>
+    <tr>
+      <td>status</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание статуса платежа.</td>
+    </tr>
+    <tr>
+      <td>statusCode</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Код статуса. Смотрите в Таблице №2.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Зачислямая сумма в валюте услуги.</td>
+    </tr>
+    <tr>
+      <td>fx</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Курс валюты.</td>
+    </tr>
+    <tr>
+      <td>topay</td>
+      <td>object</td>
+      <td>Условно</td>
+      <td>Информация по кредитным линиям пользователя. Используется для вывода информации Пользователю и организации выбора Пользователем определенного кредита (транша) в процессе его оплаты. У каждого кредита (транша) есть свой номер и может быть от 01 до 999. Обязательно, если “status”:”accepted”, “service”:”credit”.</td>
+    </tr>
+    <tr>
+      <td>accountInfo</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Информация о счета получателя.</td>
+    </tr>
+    <tr>
+      <td>limit</td>
+      <td>string</td>
+      <td>Условно</td>
+      <td>Остаток лимита пополнения карты клиента. Обязательно, если “service”:”card | card_all”</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Пример №1. Пополнение кошелька алиф.моби</p>
+
+<details>
+  <summary>Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "wallet",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "a8f29ce5a92dd38b799b72fafc648e719241ee7cda6b9be3f6761de26250d6a7",
+    "account": "+992933507769",
+    "amount": 80.00,
+    "currency": "TJS",
+    "txnid": "193342620",
+    "phone": "+992935141010",
+    "fee": 0.15,
+    "providerId": 0,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9+99293350776919334262080.00"
+
+// Ответ
+
+{
+    "id": 14477041,
+    "datetime": "2022-08-02T10:27:44.289030055+05:00",
+    "code": 200,
+    "message": "Б.Р.",
+    "status": "accepted",
+    "statusCode": 0,
+    "amount": "80",
+    "fx": "1",
+    "topay": null,
+    "accountInfo": "{<span class="se">\"</span>verified<span class="se">\"</span>:true}"
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Pay</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/pay
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "wallet",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "a8f29ce5a92dd38b799b72fafc648e719241ee7cda6b9be3f6761de26250d6a7",
+    "account": "+992933507769",
+    "amount": 80.00,
+    "currency": "TJS",
+    "txnid": "193342620",
+    "phone": "+992935141010",
+    "fee": 0.15,
+    "providerId": 0,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9+99293350776919334262080.00"
+
+// Ответ
+
+{
+    "id": 14477041,
+    "datetime": "2022-08-02T10:27:44.579560112+05:00",
+    "code": 200,
+    "message": "payment reached final state",
+    "status": "success",
+    "statusCode": 1,
+    "amount": "80",
+    "fx": "1",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №2. Пополнение кредита Алиф</p>
+
+<details>
+  <summary>Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "14623.00",
+    "amount": 160.00,
+    "currency": "TJS",
+    "hash": "f88ab6fca84e103a02db3e6aec2313237229dea898c551002ce8e05b033f7d35",
+    "phone": "931010553",
+    "providerId": 0,
+    "service": "credit",
+    "txnid": "02081025022945",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b914623.0002081025022945160.00"
+
+// Ответ
+
+{
+    "id": 14476969,
+    "datetime": "2022-08-02T10:25:02.824117951+05:00",
+    "code": 200,
+    "message": "Салом Ҷ.Т.Г. Мо ин пардохтро ҳамчун транши 14623 қабул менамоем. Қарзи ҳозираатон 158 c.",
+    "status": "accepted",
+    "statusCode": 0,
+    "amount": "160",
+    "fx": "1",
+    "topay": [
+        {
+            "id": "00",
+            "info": "Салом Ҷ.Т.Г. Мо ин пардохтро ҳамчун транши 14623 қабул менамоем. Қарзи ҳозираатон 158 c."
+        }
+    ],
+    "accountInfo": "{}"
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Pay</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/pay
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "14623.00",
+    "amount": 160.00,
+    "currency": "TJS",
+    "hash": "f88ab6fca84e103a02db3e6aec2313237229dea898c551002ce8e05b033f7d35",
+    "phone": "931010553",
+    "providerId": 0,
+    "service": "credit",
+    "txnid": "02081025022945",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b914623.0002081025022945160.00"
+
+// Ответ
+
+{
+    "id": 14476969,
+    "datetime": "2022-08-02T10:25:03.309168522+05:00",
+    "code": 200,
+    "message": "payment reached final state",
+    "status": "success",
+    "statusCode": 1,
+    "amount": "160",
+    "fx": "1",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №3. Пополнение карты Корти Милли</p>
+
+<details>
+  <summary>Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "5058270280015610",
+    "amount": 655.57,
+    "currency": "USD",
+    "hash": "de7e305c78f58bbbe8f9588f4c01cd3c17c4b2b61017ac90cc957cf7143547e1",
+    "phone": "79627204819",
+    "providerId": 0,
+    "service": "card_all",
+    "txnid": "A3563139401",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b95058270280015610A3563139401655.57"
+
+// Ответ
+
+{
+    "id": 14477338,
+    "datetime": "2022-08-02T10:38:34.94206247+05:00",
+    "code": 200,
+    "message": "O. A.",
+    "status": "accepted",
+    "statusCode": 0,
+    "amount": "6660.59",
+    "fx": "10.16",
+    "topay": null,
+    "accountInfo": "{}"
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Pay</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/pay
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "5058270280015610",
+    "amount": 655.57,
+    "currency": "USD",
+    "hash": "de7e305c78f58bbbe8f9588f4c01cd3c17c4b2b61017ac90cc957cf7143547e1",
+    "phone": "79627204819",
+    "providerId": 0,
+    "service": "card_all",
+    "txnid": "A3563139401",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b95058270280015610A3563139401655.57"
+
+// Ответ
+
+{
+    "id": 14477338,
+    "datetime": "2022-08-02T10:38:36.313772759+05:00",
+    "code": 200,
+    "message": "payment saved for further process",
+    "status": "pending",
+    "statusCode": 2,
+    "amount": "6660.59",
+    "fx": "10.16",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Post Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/post_check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "5058270280015610",
+    "amount": 655.57,
+    "currency": "USD",
+    "hash": "de7e305c78f58bbbe8f9588f4c01cd3c17c4b2b61017ac90cc957cf7143547e1",
+    "phone": "79627204819",
+    "providerId": 0,
+    "service": "card_all",
+    "txnid": "A3563139401",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b95058270280015610A3563139401655.57"
+
+// Ответ
+
+{
+    "id": 14477338,
+    "datetime": "2022-08-02T10:38:37.080271101+05:00",
+    "code": 200,
+    "message": "Платеж существует",
+    "status": "success",
+    "statusCode": 1,
+    "amount": "6660.59",
+    "fx": "10.16",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №4. Пополнение услуги провайдера</p>
+
+<details>
+  <summary>Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "provider",
+    "providerId": 93,
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "bbcaac2cd9735437a1e93e57c39927d980337927b077b11c41dad6f8bcf43a08",
+    "account": "939145566",
+    "amount": 372.30,
+    "currency": "RUB",
+    "phone": "988844074",
+    "txnid": "210000617795814",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9939145566210000617795814372.30"
+
+// Ответ
+
+{
+    "id": 14477737,
+    "datetime": "2022-08-02T10:53:00.823410913+05:00",
+    "code": 200,
+    "message": "Аккаунт найден",
+    "status": "accepted",
+    "statusCode": 0,
+    "amount": "60.76",
+    "fx": "0.1632",
+    "topay": null,
+    "accountInfo": "{}"
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Pay</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/pay
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "provider",
+    "providerId": 93,
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "bbcaac2cd9735437a1e93e57c39927d980337927b077b11c41dad6f8bcf43a08",
+    "account": "939145566",
+    "amount": 372.30,
+    "currency": "RUB",
+    "phone": "988844074",
+    "txnid": "210000617795814",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9939145566210000617795814372.30"
+
+// Ответ
+
+{
+    "id": 14477737,
+    "datetime": "2022-08-02T10:53:39.087346623+05:00",
+    "code": 200,
+    "message": "payment saved for further process",
+    "status": "pending",
+    "statusCode": 2,
+    "amount": "60.76",
+    "fx": "0.1632",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+
+<details>
+  <summary>Post Check</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/post_check
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "provider",
+    "providerId": 93,
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "bbcaac2cd9735437a1e93e57c39927d980337927b077b11c41dad6f8bcf43a08",
+    "account": "939145566",
+    "amount": 372.30,
+    "currency": "RUB",
+    "phone": "988844074",
+    "txnid": "210000617795814",
+    "fee": 0.15,
+    "last_name":"Иванов",
+    "first_name": "Иван",
+    "middle_name": "Иванович",
+    "sender_birthday": "12.12.1990",
+    "id_series_number": "5436271612",
+    "address": "Foteh Niyozi St",
+    "resident_city": "Dushanbe",
+    "resident_country": 860,
+    "postal_code": "734000",
+    "recipient_name": "John Doe"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9939145566210000617795814372.30"
+
+// Ответ
+
+{
+    "id": 14477737,
+    "datetime": "2022-08-02T10:54:15.482274805+05:00",
+    "code": 200,
+    "message": "Платеж существует",
+    "status": "success",
+    "statusCode": 1,
+    "amount": "60.76",
+    "fx": "0.1632",
+    "topay": null,
+    "accountInfo": null
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+</p>
+
+<h2 id="запрос-accounts">Запрос accounts</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>service</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Тип услуги. Смотрите в Таблице №3.</td>
+    </tr>
+    <tr>
+      <td>userid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>ID пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>hash</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Подпись запроса. Генерируется по алгоритму SHA256 из конкатенации строк: userid+’:’+datetime посредством пароля пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>account</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Номера кредита/депозита/карты/кошелка/счёта клиента для пополнения.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>float</td>
+      <td>Опционально</td>
+      <td>Сумма платежа в валюте Партнера либо услуги.</td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Код валюты по стандарту ISO 4217, например TJS, RUB, USD, UZS, …</td>
+    </tr>
+    <tr>
+      <td>providerId</td>
+      <td>int</td>
+      <td>Условно</td>
+      <td>Идентификатор услуги провайдера. Партнеру предоставляется список доступных услуг провайдеров. Обязательно, если “service”:”provider”.</td>
+    </tr>
+    <tr>
+      <td>datetime</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Дата и время запроса в формате RFC 7231</td>
+    </tr>
+    <tr>
+      <td>details</td>
+      <td>json</td>
+      <td>Условно</td>
+      <td>Дополнительные детали транзакции. Обязательно, если “service”:”emv_qr”</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа.</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Зачислямая сумма в валюте услуги.</td>
+    </tr>
+    <tr>
+      <td>fx</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Курс валюты.</td>
+    </tr>
+    <tr>
+      <td>topay</td>
+      <td>object</td>
+      <td>Условно</td>
+      <td>Информацию по кредитным линиям пользователя. Обязательно, если “status”:”accepted”, “service”:”credit”.</td>
+    </tr>
+    <tr>
+      <td>accountInfo</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Информация о счета получателя.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Пример №1. Проверка кошелька алиф.моби</p>
+
+<details>
+  <summary>Check Account</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/accounts
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "wallet",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "eb549c288dea5172a7b21d96402941efdcc5ffe9e713d14c3b16a6625ec95c4f",
+    "account": "+992933507769",
+    "amount": 80.00,
+    "currency": "TJS",
+    "providerId": 0,
+    "datetime": "Tue, 02 Aug 2022 13:33:26 +05"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9:Tue, 02 Aug 2022 13:33:26 +05"
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Операция успешно выполнена",
+    "accountInfo": "{<span class="se">\"</span>verified<span class="se">\"</span>:true}",
+    "topay": null,
+    "amount": "80",
+    "currency": "TJS",
+    "fx": "1"
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №2. Проверка кредита Алиф</p>
+
+<details>
+  <summary>Check Account</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/accounts
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "14623.00",
+    "amount": 160.00,
+    "currency": "TJS",
+    "hash": "3f6fa4c6c4a6576923761a021e69a9c1f46c3797bfa165b7ee170f0fe1db3623",
+    "providerId": 0,
+    "service": "credit",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "datetime": "Tue, 02 Aug 2022 13:32:48 +05"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9:Tue, 02 Aug 2022 13:32:48 +05"
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Салом Ҷ.Т.Г. Мо ин пардохтро ҳамчун транши 14623 қабул менамоем. Қарзи ҳозираатон 158 c.",
+    "amount": "160",
+    "currency": "TJS",
+    "fx": "1",
+    "topay": [
+        {
+            "id": "00",
+            "info": "Салом Ҷ.Т.Г. Мо ин пардохтро ҳамчун транши 14623 қабул менамоем. Қарзи ҳозираатон 158 c."
+        }
+    ],
+    "accountInfo": "{}"
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №3. Проверка карты Корти Милли</p>
+
+<details>
+  <summary>Check Account</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/accounts
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "account": "5058270280015610",
+    "amount": 655.57,
+    "currency": "USD",
+    "hash": "03b35c8903854d026b95ec9a5a9eb57e127164f58071713bacf0872524237b3d",
+    "providerId": 0,
+    "service": "card_all",
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "datetime": "Tue, 02 Aug 2022 08:38:14 +05"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9:Tue, 02 Aug 2022 08:38:14 +05"
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Успешно",
+    "amount": "6660.59",
+    "currency": "TJS",
+    "fx": "10.16",
+    "topay": null,
+    "accountInfo": ""
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+Пример №4. Проверка счета по услуге провайдера</p>
+
+<details>
+  <summary>Check Account</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/accounts
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "service": "provider",
+    "providerId": 93,
+    "userid": "476a1b42-b3dc-40e9-afad-4aaae1d640b9",
+    "hash": "d745524110e68c7f7ed4d945a8a5df4952e15434076952e00aa2fb606ade2250",
+    "account": "939145566",
+    "amount": 372.30,
+    "currency": "RUB",
+    "datetime": "Tue, 02 Aug 2022 13:42:49 +05"
+}
+
+// Конкатенированная строка для генерации hash: "476a1b42-b3dc-40e9-afad-4aaae1d640b9:Tue, 02 Aug 2022 13:42:49 +05"
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Успешно",
+    "amount": "60.76",
+    "currency": "TJS",
+    "fx": "0.1632",
+    "topay": null,
+    "accountInfo": ""
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+</p>
+
+<h2 id="запрос-получения-курса-currency-request">Запрос Получения курса (Currency request)</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>userid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>ID пользователя Партнера.</td>
+    </tr>
+    <tr>
+      <td>service</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Тип услуги. Смотрите в Таблице №3.</td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>string</td>
+      <td>Опционально</td>
+      <td>Код валюты по стандарту ISO 4217, например TJS, RUB, USD, UZS, …</td>
+    </tr>
+    <tr>
+      <td>providerId</td>
+      <td>int</td>
+      <td>Условно</td>
+      <td>Идентификатор услуги провайдера. Партнеру предоставляется список доступных услуг провайдеров. Обязательно, если “service”:”provider”.</td>
+    </tr>
+    <tr>
+      <td>timestamp</td>
+      <td>int64</td>
+      <td>Обязательно</td>
+      <td>Дата и время запроса в формате timestamp</td>
+    </tr>
+    <tr>
+      <td>hash</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Подпись запроса. Генерируется по алгоритму SHA256 из конкатенации строк: userid+ service +datetime посредством пароля пользователя Партнера.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа.</td>
+    </tr>
+    <tr>
+      <td>payload</td>
+      <td>object</td>
+      <td>Обязательно</td>
+      <td>Полезная нагрузка содержащая всю информацию о курсе</td>
+    </tr>
+    <tr>
+      <td>rate</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>акутальный курс</td>
+    </tr>
+    <tr>
+      <td>unit_per_buy_currency</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>За единицу (валюта покупки)</td>
+    </tr>
+    <tr>
+      <td>unit_per_sell_currency</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>За единицу (валюта продажи)</td>
+    </tr>
+    <tr>
+      <td>destination_currency</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>валюта получателя</td>
+    </tr>
+    <tr>
+      <td>datetime</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Дата и время запроса в формате RFC 3339</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br />
+Пример запроса для получения курса</p>
+
+<details>
+  <summary>GetCurrency</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: POST
+Адрес: {URL}/currency
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+{
+    "user_id":"d0f20b85-e79f-42df-b580-61d145f3b912",
+    "service":"provider",
+    "provider_id":93,
+    "currency":"USD",
+    "timestamp":1681714823,
+    "hash":"292a09b25a5abb6c5dcfee8f279f6c905ae08ecc38860a5705645966df4ea36e"
+}
+
+// Конкатенированная строка для генерации hash: "d0f20b85-e79f-42df-b580-61d145f3b912 + provider + 1681714823"
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Успешно",
+    "payload": {
+        "rate": "0.0125",
+        "unit_per_buy_currency": "1",
+        "unit_per_sell_currency": "1",
+        "destination_currency": "RUB",
+        "datetime": "2023-04-17T12:02:59.903827773+05:00"
+    }
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br /></p>
+
+<h2 id="запрос-получения-списка-услуг">Запрос получения списка услуг</h2>
+
+<p><strong>Параметры запроса</strong></p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Параметр</td>
+      <td>Тип</td>
+      <td>Условие</td>
+      <td>Описание</td>
+    </tr>
+    <tr>
+      <td>userid</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>ID пользователя Партнера.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Параметры ответа</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>code</td>
+      <td>int</td>
+      <td>Обязательно</td>
+      <td>Числовой код ответа. Смотрите в Таблице №1</td>
+    </tr>
+    <tr>
+      <td>message</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Описание кода ответа.</td>
+    </tr>
+    <tr>
+      <td>list</td>
+      <td>[]List</td>
+      <td>Опционально</td>
+      <td>Массив услуг</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><em>Тип List</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Параметр</th>
+      <th>Тип</th>
+      <th>Условие</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>providerId</td>
+      <td>int64</td>
+      <td>Условно</td>
+      <td>Идентификатор услуги провайдеров. Обязательно, если “service”:”provider”</td>
+    </tr>
+    <tr>
+      <td>title</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Название услуги</td>
+    </tr>
+    <tr>
+      <td>service</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Тип услуги</td>
+    </tr>
+    <tr>
+      <td>limit_min</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>Минимальная сумма оплаты</td>
+    </tr>
+    <tr>
+      <td>limit_max</td>
+      <td>float</td>
+      <td>Обязательно</td>
+      <td>Максимальная сумма оплаты</td>
+    </tr>
+    <tr>
+      <td>regex</td>
+      <td>string</td>
+      <td>Обязательно</td>
+      <td>Регулярное выражение для счета пополнения</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Пример</p>
+
+<details>
+  <summary>Check Account</summary>
+
+  <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Запрос
+
+Метод: GET
+Адрес: {URL}/list/services/{userid}
+Accept: application/json
+Content-type: application/json; charset=utf-8
+
+// Ответ
+
+{
+    "code": 200,
+    "message": "Успешно",
+    "list": [
+        {
+            "providerId": 2017,
+            "title": "Steam",
+            "service": "provider",
+            "limit_min": "10",
+            "limit_max": "30500",
+            "regex": ""
+        },
+        {
+            "providerId": 749,
+            "title": "Алиф Академия",
+            "service": "provider",
+            "limit_min": "1",
+            "limit_max": "4800",
+            "regex": "^.{1,30}$"
+        },
+        {
+            "providerId": 593,
+            "title": "QIWI Кошелек (Таджикистан)",
+            "service": "provider",
+            "limit_min": "15",
+            "limit_max": "9500",
+            "regex": "^<span class="se">\\</span>d{9}$"
+        },
+        {
+            "providerId": 0,
+            "title": "wallet",
+            "service": "wallet",
+            "limit_min": "0",
+            "limit_max": "0",
+            "regex": ""
+        },
+        {
+            "providerId": 0,
+            "title": "card",
+            "service": "card",
+            "limit_min": "0",
+            "limit_max": "0",
+            "regex": ""
+        },
+        {
+            "providerId": 0,
+            "title": "card_all",
+            "service": "card_all",
+            "limit_min": "0",
+            "limit_max": "0",
+            "regex": ""
+        }
+    ]
+}
+</code></pre></div>  </div>
+
+</details>
+<p><br />
+</p>
+
+<h2 id="таблица-1-коды-ответов">Таблица №1. Коды ответов</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Код</th>
+      <th>Описание</th>
+      <th>Фатальность</th>
+      <th>check</th>
+      <th>pay</th>
+      <th>post_check</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>Успешно</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>285</td>
+      <td>Произошла ошибка при конвертации</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>286</td>
+      <td>Курс валюты изменился</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Неверный запрос</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>401</td>
+      <td>Не авторизован</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>402</td>
+      <td>Получатель не найден</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>403</td>
+      <td>Нет доступа</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>404</td>
+      <td>Платеж не найден</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>405</td>
+      <td>Метод не разрешен</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>406</td>
+      <td>Повторное подтверждение платежа</td>
+      <td>Да</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>409</td>
+      <td>Повторный запрос проверки</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>410</td>
+      <td>Неверный счет получателя</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>411</td>
+      <td>Сумма слишком мала</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>412</td>
+      <td>Сумма слишком велика</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>413</td>
+      <td>Неверная сумма перевода</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>414</td>
+      <td>Неверный идентификатор запроса</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>415</td>
+      <td>Клиент в стоп-листе</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Внутренняя ошибка сервера</td>
+      <td>Да</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>503</td>
+      <td>Временная ошибка. Повторите запрос позже</td>
+      <td>Нет</td>
+      <td>+</td>
+      <td>+</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>520</td>
+      <td>Платеж в ожидании</td>
+      <td>Нет</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>521</td>
+      <td>Платеж на проверке</td>
+      <td>Нет</td>
+      <td>-</td>
+      <td>+</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="таблица-2-коды-статусов">Таблица №2. Коды статусов</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Код</th>
+      <th>Статус</th>
+      <th>Описание</th>
+      <th>Фатальность</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>accepted</td>
+      <td>Транзакция принята, ожидание оплаты</td>
+      <td>Нет</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>success</td>
+      <td>Транзакция прошла успешно</td>
+      <td>Да</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>pending</td>
+      <td>Транзакция обрабатывается</td>
+      <td>Нет</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>failed</td>
+      <td>Транзакция не удалась</td>
+      <td>Да</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>canceled</td>
+      <td>Транзакция отменена</td>
+      <td>Да</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="таблица-3-список-услуг">Таблица №3. Список услуг</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Название</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>wallet</td>
+      <td>Пополнение кошелька алиф.моби</td>
+    </tr>
+    <tr>
+      <td>card</td>
+      <td>Пополнение карт Корти Милли, принадлежащие Алифу</td>
+    </tr>
+    <tr>
+      <td>card_all</td>
+      <td>Пополнение карт Корти Милли</td>
+    </tr>
+    <tr>
+      <td>card_humouz</td>
+      <td>Пополнение карт ХумоУз</td>
+    </tr>
+    <tr>
+      <td>card_uzcard</td>
+      <td>Пополнение карт Узкарт</td>
+    </tr>
+    <tr>
+      <td>credit</td>
+      <td>Пополнение кредита Алиф</td>
+    </tr>
+    <tr>
+      <td>deposit</td>
+      <td>Пополнение депозита Алиф</td>
+    </tr>
+    <tr>
+      <td>invoice</td>
+      <td>Оплата выставленных счетов</td>
+    </tr>
+    <tr>
+      <td>provider</td>
+      <td>Пополнение услуг провайдеров</td>
+    </tr>
+    <tr>
+      <td>emv_qr</td>
+      <td>Оплата по Emv Qr</td>
+    </tr>
+    <tr>
+      <td>invoice_qr</td>
+      <td>Оплата по Qr</td>
+    </tr>
+    <tr>
+      <td>transfer_by_phone</td>
+      <td>Перевод по номеру телефона в Таджикистан</td>
+    </tr>
+    <tr>
+      <td>transfer_by_phone_uz</td>
+      <td>Перевод по номеру телефона в Узбекистан</td>
+    </tr>
+    <tr>
+      <td>card_visa_alif</td>
+      <td>Пополнение карт Visa Алиф</td>
+    </tr>
+    <tr>
+      <td>card_visa_tj</td>
+      <td>Пополнение таджикских карт Visa</td>
+    </tr>
+    <tr>
+      <td>card_visa_foreign</td>
+      <td>Пополнение иностранных карт Visa</td>
+    </tr>
+  </tbody>
+</table>
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+  </body>
+</html>
